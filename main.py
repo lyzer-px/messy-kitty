@@ -46,6 +46,7 @@ class Game:
         while self.runs:
             pg.display.update()
             self.screen.window.fill(self.colors.cyan)
+            self.screen.window.blit(self.grandma, ((self.screen.width / 2) - 300, (self.screen.height / 2) - 200))
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.runs = False
