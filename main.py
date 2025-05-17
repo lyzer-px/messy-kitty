@@ -16,32 +16,43 @@ class Colors:
 
 class Event:
     def __init__(self):
-        self.event_total = 5
-        self.event_prob = 1 # In percentage
+        self.event_total: int = 5
+        self.event_prob: float = 1 # In percentage
+
+class Assets:
+    def __init__(self):
+        self.grandma_path: str = "assets/grandma.png"
 
 class Screen:
     def __init__(self):
-        self.width = 1920
-        self.height = 1080
-        self.background = pg.Rect(0, 0, self.width, self.height)
+        self.width: int = 1920
+        self.height: int = 1080
         self.window = pg.display.set_mode((self.width, self.height))
 
 class Game:
     def __init__(self):
-        self.framerate = 60
-        self.screen_width = 1920
-        self.screen_height = 1080
         self.screen = Screen()
+        self.framerate: float = 60
+        self.screen_width: int = self.screen.width
+        self.screen_height: int = self.screen.height
         self.colors = Colors()
-        self.runs = True
+        self.assets = Assets()
+        self.runs: bool = True
+        self.clock = pg.time.Clock()
+        self.grandma = pg.image.load(self.assets.grandma_path)
         pg.init()
+
     def run(self):
-        while self.run:
+        while self.runs:
             pg.display.update()
-            pg.draw.rect(self.screen.window, self.colors.cyan, self.screen.background)
+            self.screen.window.fill(self.colors.cyan)
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    self.run = False
+                    self.runs = False
+
+            pg.display.flip()
+            self.clock.tick(self.framerate)
+
 
 
 if __name__ == '__main__':
