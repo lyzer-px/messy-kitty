@@ -9,7 +9,7 @@ import pygame as pg
 
 from .constants import ASSETS, Colors
 from .system.screen import BaseLayer, Screen
-from .system.sprite import Sprite
+from .system.render import Sprite
 
 class MainMenuLayer(BaseLayer):
     def setup(self):
