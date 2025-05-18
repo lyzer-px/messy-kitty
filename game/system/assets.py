@@ -18,6 +18,9 @@ class BaseAsset:
     def get_path(self):
         return self.path
 
+    def set_resource(self, resource):
+        self.resource = resource
+
     def get_resource(self):
         if self.resource is None:
             raise AssetLoadingException("Asset is not loaded")
@@ -35,5 +38,5 @@ class AssetManager:
     def __init__(self, assets={}):
         self.assets = assets
 
-    def get(self, key: str):
+    def get(self, key: str) -> BaseAsset:
         return self.assets.get(key, None)

@@ -8,8 +8,8 @@
 import inspect
 import pygame as pg
 
-from abc import ABC, abstractmethod
-from typing import Callable
+from abc import ABC
+from typing import Any, Callable
 
 class Screen:
     def __init__(self, width=1920, height=1080, framerate=60):
@@ -18,8 +18,7 @@ class Screen:
         self.width = width
         self.height = height
         self.window = pg.display.set_mode(
-            (self.width, self.height,)
-        )
+            (self.width, self.height,))
         self.layers: list[BaseLayer] = []
 
     def update_all_layers(self):
@@ -37,18 +36,19 @@ class Screen:
         self.update_all_layers()
 
     def remove_layer(self, layer):
+        if layer not in self.layers:
+            return
         if isinstance(layer, BaseLayer):
             layer.active_parent = None
-        if self.layers.index(layer) < 0:
-            return
         used_layer = self.layers.pop(self.layers.index(layer))
         if self.runs:
             used_layer.teardown()
         self.update_all_layers()
 
     def clear_layers(self):
-        if self.runs:
-            for layer in self.layers:
+        for layer in self.layers:
+            layer.active_parent = None
+            if self.runs:
                 layer.teardown()
         self.layers = []
 
@@ -69,6 +69,8 @@ class Screen:
             for layer in self.layers: layer.render(*layer.context)
             pg.display.update()
             self.clock.tick(self.framerate)
+            if (len(self.layers) == 0):
+                self.runs = False
         for layer in self.layers: layer.teardown(*layer.context)
     
     def stop(self):
@@ -92,23 +94,16 @@ class BaseLayer(ABC):
         self.active_parent = active_parent
         self.events: dict[int, list[Callable]] = {}
 
-    @abstractmethod
     def setup(self): pass
-
-    @abstractmethod
     def tick(self): pass
-
-    @abstractmethod
     def render(self): pass
-
-    @abstractmethod
     def teardown(self): pass
 
     def remove(self):
         if type(self.active_parent) is Screen:
-            self.active_parent.remove_layer(self.active_parent)
+            self.active_parent.remove_layer(self)
 
-    def when(self, event_type, function: Callable[[pg.event.Event], bool]):
+    def when(self, event_type, function: Callable[[pg.event.Event], Any]):
         if self.events.get(event_type, None) is None:
             self.events[event_type] = []
         self.events[event_type].append(function)
@@ -119,13 +114,21 @@ class BaseLayer(ABC):
         if self.events.get(event.type, None) is None:
             return False
         for listener in self.events[event.type]:
-            interrupted = listener(event) or interrupted
+            interrupted = (listener(event) == True) or interrupted
         return interrupted
 
     def is_last_layer(self) -> bool:
         if type(self.active_parent) is Screen:
             return self.active_index == len(self.active_parent.layers) - 1
         return False
+
+    def get_screen(self) -> Screen:
+        if type(self.active_parent) is Screen:
+            return self.active_parent
+        raise RuntimeError("This layer isn't bound to a screen")
+        
+    def get_surface(self) -> pg.Surface:
+        return self.get_screen().window
 
     def get_index(self) -> int:
         if type(self.active_parent) is Screen:

@@ -9,22 +9,37 @@ from .assets import AssetManager
 import pygame as pg
 
 class Sprite(pg.sprite.Sprite):
-    def __init__(self, assets: AssetManager, list):
+    pos = (0, 0)
+
+    def __init__(self,
+                 assets: AssetManager,
+                 asset_name=None,
+                 pos=(0, 0),
+                 *,
+                 states=None, tile_size=(16, 16)):
         super().__init__()
-        self.images = {}
-        if (len(list) == 0):
+        self.images = []
+        self.pos = pos
+        self.asset_name = asset_name
+        self.asset = assets.get(asset_name or "default")
+        self.state = 0
+        sheet = self.asset.get_resource()
+        if not isinstance(sheet, pg.Surface):
+            raise TypeError("Wrong asset type for Sprite")
+        if states is None:
+            self.images = [sheet]
             return
-        for i in range(len(list)):
-            texture_name, coords = list[i]
-            spritesheet = assets.get(texture_name)
-            if (spritesheet is None):
-                return
-            self.images[str(i)] = spritesheet.spritesheet.subsurface(coords)
-        self.set_state(0)
+        for e in states:
+            self.images.append(sheet.subsurface(
+                pg.rect.Rect(*([*e, *tile_size][:4]))
+            ))
 
     def set_state(self, state: int):
-        self.state = max(min(len(self.image), state), 0)
+        self.state = max(min(len(self.images), state), 0)
         self.image = self.images[self.state]
 
     def next_state(self):
         self.set_state(self.state + 1 % len(self.images))
+
+    def render(self, sf: pg.Surface):
+        sf.blit(self.images[self.state], self.pos)
