@@ -6,9 +6,11 @@
 ## main.py
 ##
 
+import assets
 import pygame as pg
 import random
 import time
+
 
 class Colors:
     def __init__(self):
@@ -18,10 +20,6 @@ class Event:
     def __init__(self):
         self.event_total: int = 5
         self.event_prob: float = 1 # In percentage
-
-class Assets:
-    def __init__(self):
-        self.grandma_path: str = "assets/grandma.png"
 
 class Screen:
     def __init__(self):
@@ -36,17 +34,17 @@ class Game:
         self.screen_width: int = self.screen.width
         self.screen_height: int = self.screen.height
         self.colors = Colors()
-        self.assets = Assets()
+        self.assets = assets.Assets()
         self.runs: bool = True
         self.clock = pg.time.Clock()
-        self.grandma = pg.image.load(self.assets.grandma_path)
+        # self.grandma = pg.image.load(self.assets.)
         pg.init()
 
     def run(self):
         while self.runs:
             pg.display.update()
             self.screen.window.fill(self.colors.cyan)
-            self.screen.window.blit(self.grandma, ((self.screen.width / 2) - 300, (self.screen.height / 2) - 200))
+            self.screen.window.blit(self.assets.get('grandma'), ((self.screen.width / 2) - 300, (self.screen.height / 2) - 200))
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.runs = False
