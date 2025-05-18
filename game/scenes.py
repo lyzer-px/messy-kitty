@@ -30,19 +30,45 @@ class Cat(Sprite):
             tile_size=Cat.TILE_SIZE,
             scale=3
         )
-        self.add_animation("switch_between_frames", ObjectAnimator(
-            setter=lambda frame, x, y: (
-                self.set_state(frame),
-                self.modify_pos(x, y)
-            ),
-            states=[
-                (0, 0, 0, 0),
-                (1, len(Cat.TILES), -100, -100)
-            ],
-            looping=True,
-            duration=0.7,
-            enabled=False
-        ), GameObject.MODE_DELTA)
+        self.set_pos(750, 880)
+
+    def tick(self, time, plate_held):
+        mouse = pg.mouse.get_pos()
+        try:
+            animation = self.get_animation("cat_jump")
+            if animation._time > animation.duration:
+                self.del_animation("cat_jump");
+                raise Exception("Jump!")
+        except:
+            if not plate_held:
+                self.add_animation("cat_jump", ObjectAnimator(
+                    setter=lambda frame, x, y: (
+                        self.set_state(frame),
+                        self.set_pos(x, y)
+                    ),
+                    states=[
+                        (0, 0, self.pos[0], self.pos[1]),
+                        (1, len(Cat.TILES), 750, 880)
+                    ],
+                    looping=False,
+                    duration=0.7,
+                    enabled=True
+                ), GameObject.MODE_DELTA)
+            else:
+                self.add_animation("cat_jump", ObjectAnimator(
+                    setter=lambda frame, x, y: (
+                        self.set_state(frame),
+                        self.set_pos(x, y)
+                    ),
+                    states=[
+                        (0, 0, self.pos[0], self.pos[1]),
+                        (1, len(Cat.TILES), mouse[0], mouse[1])
+                    ],
+                    looping=False,
+                    duration=0.7,
+                    enabled=True
+                ), GameObject.MODE_DELTA)
+        self.animate_auto(time)
 
 class Plate(Sprite):
     TILE_SIZE = (43, 17)
@@ -84,7 +110,7 @@ class ActionLayer(BaseLayer):
     def tick(self):
         screen = self.get_screen()
         time = float(screen.clock.get_time()) / 1000
-        self.cat.animate_auto(time)
+        self.cat.tick(time, self.dragged_plate)
         self.mouse_pos = pg.mouse.get_pos()
         self.mouse_button_pressed = pg.mouse.get_pressed()
         self.target.set_pos(*self.mouse_pos)
@@ -112,7 +138,6 @@ class ActionLayer(BaseLayer):
         self.plate.pos = self.base_plate
         self.cat.render(window)
         self.table.render(window)
-        self.plate.render(window)
         self.tick()
         for i in range(self.plate_count):
             self.plate.pos = self.plate_pile[i]
