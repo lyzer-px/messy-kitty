@@ -9,7 +9,7 @@ import pygame as pg
 import random
 
 from .constants import ASSETS, Colors
-from .system.screen import BaseLayer, Screen
+from .system.screen import BaseLayer
 from .system.render import GameObject, ObjectAnimator, RectangularObject, Sprite
 
 class Cat(Sprite):
@@ -120,6 +120,7 @@ class ActionLayer(BaseLayer):
         if self.mouse_button_pressed[0]:
             self.plate_pos = self.mouse_pos
             self.plate.pos = self.plate_pile[self.plate_count - 1]
+            self.drawer.pos = self.drawer_plate_pile[self.drawer_plate_count - 1]
             self.plate.set_size(30 * 3, 30)
             if not self.dragged_plate and self.target.collides(self.plate) \
                 and self.plate_count > 0:
