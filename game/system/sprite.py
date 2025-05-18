@@ -1,9 +1,15 @@
+##
+## Epitech Game Jam - May 2025
+## Messy kitty
+##
+## Game class definition.
+##
 
-from .assets import Assets
+from .assets import AssetManager
 import pygame as pg
 
 class Sprite(pg.sprite.Sprite):
-    def __init__(self, assets: Assets, list):
+    def __init__(self, assets: AssetManager, list):
         super().__init__()
         self.images = {}
         if (len(list) == 0):

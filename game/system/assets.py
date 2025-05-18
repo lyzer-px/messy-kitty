@@ -31,12 +31,9 @@ class Image(BaseAsset):
 
 # TODO: Create Sound class
 
-class Assets:
-    grandma = Image('assets/grandma.png')
-    plate = Image('assets/plate.png')
-#    table = Image('assets/table.png')
-#    shelves = Image('assets/shelves')
+class AssetManager:
+    def __init__(self, assets={}):
+        self.assets = assets
 
-    @staticmethod
-    def get(key: str):
-        return Assets.__dict__.get(key, None)
+    def get(self, key: str):
+        return self.assets.get(key, None)
