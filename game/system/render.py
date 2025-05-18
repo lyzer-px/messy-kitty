@@ -245,12 +245,14 @@ class Sprite(StatefulObject, RectangularObject, RenderableObject):
                  asset_name=None,
                  pos=(0, 0),
                  *,
+                 scale=1,
                  states=None, tile_size=(16, 16)):
         self.images = []
         self.pos = pos
         self.asset_name = asset_name
         self.asset = assets.get(asset_name or "default")
         self.state = 0
+        self.scale = scale
         sheet = self.asset.get_resource()
         if not isinstance(sheet, pg.Surface):
             raise TypeError("Wrong asset type for Sprite")

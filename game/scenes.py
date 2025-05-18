@@ -11,19 +11,28 @@ from .constants import ASSETS, Colors
 from .system.screen import BaseLayer, Screen
 from .system.render import GameObject, ObjectAnimator, Sprite
 
-class MainMenuLayer(BaseLayer):
+class ActionLayer(BaseLayer):
+    cat = Sprite(ASSETS, "cat")
+    dish = Sprite(ASSETS, "dish")
+
     def setup(self):
-        def exit_main_menu(_):
-            self.remove()
-            return True
-        self.when(pg.MOUSEBUTTONUP, exit_main_menu)
+        def mousemove(event):
+            ...
+        self.when(pg.MOUSEMOTION, mousemove)
+
+    def tick(self):
+        ...
 
     def render(self):
-        screen = self.get_screen()
-        window = self.get_surface()
-        window.fill(Colors.CYAN)
+        ...
 
-class BootLayer(BaseLayer):
+class BackgroundLayer(BaseLayer):
+    background = Sprite(ASSETS, "kitchen")
+
     def setup(self):
-        self.get_screen().add_layer(MainMenuLayer)
-        self.remove()
+        self.get_screen().add_layer(ActionLayer)
+    
+    def render(self):
+        window = self.get_surface()
+        window.fill(Colors.BLACK)
+        self.background.render(window)

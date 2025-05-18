@@ -13,6 +13,7 @@ from enum import Enum
 from .system.assets import AssetManager, Image
 
 class Colors:
+    BLACK = pg.Color(0, 0, 0)
     CYAN = pg.Color(0, 255, 255)
 
 class PossibleEvents(Enum):
@@ -20,7 +21,7 @@ class PossibleEvents(Enum):
 
 ASSETS = AssetManager({
     "grandma": Image('assets/grandma.png'),
-    #"plate": Image('assets/plate.png'),
-    #"table": Image('assets/table.png'),
-    #"shelves": Image('assets/shelves')
+    "plate": Image('assets/plate.png'),
+    "cat": Image('assets/car.png'),
+    "kitchen": Image('assets/kitchen.png'),
 })
