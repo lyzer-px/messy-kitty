@@ -13,6 +13,7 @@ from typing import Callable
 
 class Screen:
     def __init__(self, width=1920, height=1080, framerate=60):
+        self.runs = False
         self.framerate = framerate
         self.width = width
         self.height = height
@@ -20,6 +21,10 @@ class Screen:
             (self.width, self.height,)
         )
         self.layers: list[BaseLayer] = []
+
+    def update_all_layers(self):
+        for layer in enumerate(self.layers):
+            layer[1].active_index = layer[0]
 
     def add_layer(self, layer, *context):
         if inspect.isclass(layer):
@@ -29,11 +34,23 @@ class Screen:
         layer.active_parent = self
         self.layers.append(layer)
         self.layers.sort(key=lambda x:x.z_index)
+        self.update_all_layers()
 
     def remove_layer(self, layer):
         if isinstance(layer, BaseLayer):
             layer.active_parent = None
-        self.layers.pop(self.layers.index(layer))
+        if self.layers.index(layer) < 0:
+            return
+        used_layer = self.layers.pop(self.layers.index(layer))
+        if self.runs:
+            used_layer.teardown()
+        self.update_all_layers()
+
+    def clear_layers(self):
+        if self.runs:
+            for layer in self.layers:
+                layer.teardown()
+        self.layers = []
 
     def start(self):
         self.runs = True
@@ -60,6 +77,7 @@ class Screen:
 
 class BaseLayer(ABC):
     z_index = 0
+    active_index = 0
     context = []
 
     def __init__(self,
@@ -103,3 +121,13 @@ class BaseLayer(ABC):
         for listener in self.events[event.type]:
             interrupted = listener(event) or interrupted
         return interrupted
+
+    def is_last_layer(self) -> bool:
+        if type(self.active_parent) is Screen:
+            return self.active_index == len(self.active_parent.layers) - 1
+        return False
+
+    def get_index(self) -> int:
+        if type(self.active_parent) is Screen:
+            return self.active_index
+        return -1
