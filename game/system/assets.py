@@ -35,5 +35,5 @@ class AssetManager:
     def __init__(self, assets={}):
         self.assets = assets
 
-    def get(self, key: str):
+    def get(self, key: str) -> BaseAsset:
         return self.assets.get(key, None)

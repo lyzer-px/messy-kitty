@@ -13,7 +13,7 @@ from enum import Enum
 from .system.assets import AssetManager, Image
 
 class Colors:
-    cyan = pg.Color(0, 255, 255)
+    CYAN = pg.Color(0, 255, 255)
 
 class PossibleEvents(Enum):
     ...
