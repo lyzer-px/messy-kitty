@@ -11,10 +11,13 @@ from .constants import ASSETS
 from .system.screen import BaseLayer, Screen
 
 class MainMenuLayer(BaseLayer):
-    def setup(self): ...
-    def tick(self): ...
-    def render(self): ...
-    def teardown(self): ...
+    def setup(self):
+        def exit_main_menu(*_):
+            self.remove()
+        self.when(pg.BUTTON_LEFT, exit_main_menu)
+
+    def render(self):
+        pass
 
 class Game:
     def __init__(self):
