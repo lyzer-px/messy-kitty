@@ -25,7 +25,7 @@ class BaseAsset:
 
 class Image(BaseAsset):
     def __init__(self, path: str):
-        super(self.__class__, self).__init__(path);
+        super(self.__class__, self).__init__(path)
         with open(path, "r") as file:
             self.resource = pg.image.load(file)
 
@@ -33,9 +33,10 @@ class Image(BaseAsset):
 
 class Assets:
     grandma = Image('assets/grandma.png')
+    plate = Image('assets/plate.png')
 #    table = Image('assets/table.png')
 #    shelves = Image('assets/shelves')
 
     @staticmethod
     def get(key: str):
-        return Assets.__dict__.get(key, None);
+        return Assets.__dict__.get(key, None)
