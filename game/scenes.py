@@ -6,6 +6,7 @@
 ##
 
 import pygame as pg
+import random
 
 from .constants import ASSETS, Colors
 from .system.screen import BaseLayer, Screen
@@ -27,7 +28,7 @@ class Cat(Sprite):
             ASSETS, "cat",
             states=Cat.TILES,
             tile_size=Cat.TILE_SIZE,
-            scale=3.0
+            scale=3
         )
         self.add_animation("switch_between_frames", ObjectAnimator(
             setter=lambda frame, x, y: (
@@ -43,19 +44,33 @@ class Cat(Sprite):
             enabled=False
         ), GameObject.MODE_DELTA)
 
+class Plate(Sprite):
+    TILE_SIZE = (43, 17)
+    TILES = [
+        (0, 18),
+        (0, 0),
+    ]
+
+    def __init__(self):
+        super(Plate, self).__init__(
+            ASSETS, "plate",
+            states=Plate.TILES,
+            tile_size=Plate.TILE_SIZE,
+            scale=3
+        )
+
 class ActionLayer(BaseLayer):
     cat = Cat()
+    plate = Plate()
     table = Sprite(ASSETS, "table", scale_to=(None, 1080))
-    plate = Sprite(ASSETS, "plate")
     target = RectangularObject()
     drawer = RectangularObject()
 
     def setup(self):
         self.base_plate = (100, 640)
-        plate_holder = pg.Rect(0, 0, 30, 30)
-        self.max_plate_in_pile = 10
-        self.plate_pile = [(1920 / 2, (640 + (i * 4)),) for i in range(self.max_plate_in_pile)]
-        self.plate_count = 2
+        self.max_plate_in_pile = 130
+        self.plate_pile = [(40 + random.randint(0, 2), (1000 - (i * 10)),) for i in range(self.max_plate_in_pile)]
+        self.plate_count = 20
         self.dragged_plate = False
         self.mouse_pos = (1920 / 2, 1080 / 2)
         self.plate_pos = (1920 / 2 + 100, 1080 / 2)
@@ -73,10 +88,11 @@ class ActionLayer(BaseLayer):
         self.mouse_pos = pg.mouse.get_pos()
         self.mouse_button_pressed = pg.mouse.get_pressed()
         self.target.set_pos(*self.mouse_pos)
+        self.cat.set_size(40, 40)
         if self.mouse_button_pressed[0]:
             self.plate_pos = self.mouse_pos
             self.plate.pos = self.plate_pile[self.plate_count - 1]
-            self.plate.set_size(30, 30)
+            self.plate.set_size(30 * 3, 30)
             if not self.dragged_plate and self.target.collides(self.plate) \
                 and self.plate_count > 0:
                 self.plate_count -= 1
@@ -84,7 +100,6 @@ class ActionLayer(BaseLayer):
             elif self.target.collides(self.cat):
                 self.dragged_plate = False
         elif self.dragged_plate:
-            print(self.drawer.size, self.drawer.pos, self.target.size, self.target.pos)
             if self.target.collides(self.drawer):
                 print("Put in drawer")
             else:

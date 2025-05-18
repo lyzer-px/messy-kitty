@@ -12,7 +12,7 @@ from abc import ABC
 from typing import Any, Callable
 
 class Screen:
-    def __init__(self, width=1920, height=1080, framerate=60):
+    def __init__(self, width=880, height=1080, framerate=60):
         self.runs = False
         self.framerate = framerate
         self.width = width
