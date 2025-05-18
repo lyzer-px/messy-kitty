@@ -5,6 +5,7 @@
 ## Game class definition.
 ##
 
+import math
 import sys
 import pygame as pg
 
@@ -14,32 +15,71 @@ from typing import Callable, Tuple
 from .assets import AssetManager
 
 class ObjectAnimator():
+    LINEAR = lambda d:d
+    EASE = lambda d:-(math.cos(math.pi * d) - 1) / 2
+
     def __init__(self, *,
-                 setter: Callable[[int | float], None] | None = None,
-                 states: list[Tuple[float, int | float]] | None = [],
-                 start: int | float | None = None,
-                 end: int | float | None = None,
+                 setter: Callable | None = None,
+                 states: list[Tuple[float | None, ...]] | None = [],
+                 start: Tuple[int | float, ...] | None = None,
+                 end: Tuple[int | float, ...] | None = None,
                  delay: int | float = 0.0,
                  duration: int | float = 1.0,
                  curve: Callable[[float], float] = lambda x:x,
+                 interpolation: bool = True,
+                 enabled: bool = True,
                  looping: bool = False):
         self.setter = setter
         self.looping = looping
         self.curve = curve
         self.delay = delay
         self.duration = duration
+        self.interpolation = interpolation
+        self.enabled = enabled
         self._time = 0.0
         self._reset = 0.0
+        locstates = []
         if states is not None:
-            self.states = states
+            locstates = states
         elif start is not None and end is not None:
-            self.states = [(0.0, start), (1.0, end)]
+            locstates = [(0.0, *start), (1.0, *end)]
         else:
-            self.states = []
-        self.states.sort(key=lambda x:x[0])
+            locstates = []
+        if len(locstates) < 2: 
+            raise ValueError("Animation must have at least two states")
+        locstates.sort(key=lambda x:x[0] if x[0] is not None else 0)
+        self._states: list[list[float | None]] = [list(e) for e in locstates]
+        for i in range(1, len(self._states[0])):
+            self._interpolate_columns(i)
+        self.states: list[list[float]] = [
+            [x for x in e if x is not None] for e in self._states]
 
-    def push_state(self, time: float, value: int | float):
-        self.states.append((time, value,))
+    def _interpolate_columns(self, col):
+        valid_rows = [
+            i for i in range(len(self._states))
+            if self._states[i][col] is not None
+        ]
+        if len(valid_rows) == 0:
+            for row in self._states: row[col] = 0
+            return
+        if len(valid_rows) == 1:
+            for row in self._states: row[col] = self._states[valid_rows[0]][col]
+            return
+        def apply(start, end):
+            for i in range(start + 1, end):
+                cdelta = (self._states[i][0] - self._states[start][0]) \
+                       / (self._states[end][0] - self._states[start][0])
+                vdelta = self._states[start][i] \
+                       + (self._states[end][i] - self._states[start][i]) * cdelta
+                self._states[i][col] = vdelta
+        for iend in range(1, len(valid_rows)):
+            start = valid_rows[iend - 1]
+            end = valid_rows[iend]
+            apply(start, end)
+        apply(-(len(self._states) - valid_rows[-1]), valid_rows[0])
+
+    def push_state(self, time: float, values: Tuple[int | float]):
+        self.states.append([time, *values])
         self.states.sort(key=lambda x:x[0])
 
     def reset_time_anim(self, seconds: float = 0.0):
@@ -49,49 +89,54 @@ class ObjectAnimator():
         self._time = seconds
 
     def animate_time(self, seconds: float):
+        if not self.enabled: return
         if self.setter is not None:
-            self.setter(self.get_seconds_anim_value(seconds))
+            self.setter(*self.get_seconds_anim_values(seconds))
         else:
             raise ValueError("Setter not enabled, cannot use this method")
 
     def animate_delta(self, delta_seconds: float):
+        if not self.enabled: return
         self._time += delta_seconds
         if self.setter is not None:
-            self.setter(self.get_seconds_anim_value(self._time))
+            self.setter(*self.get_seconds_anim_values(self._time))
         else:
             raise ValueError("Setter not enabled, cannot use this method")
 
     def animate_percent(self, cursor: float):
+        if not self.enabled: return
         if self.setter is not None:
-            self.setter(self.get_anim_value(cursor))
+            self.setter(*self.get_anim_values(cursor))
         else:
             raise ValueError("Setter not enabled, cannot use this method")
 
-    def get_seconds_anim_value(self, seconds: float) -> int | float:
+    def get_seconds_anim_values(self, seconds: float) -> list[int | float]:
         seconds -= self._reset + self.delay
-        return self.get_anim_value(seconds / self.duration)
+        return self.get_anim_values(seconds / self.duration)
 
-    def get_anim_value(self, cursor: float) -> int | float: 
+    def get_anim_values(self, cursor: float) -> list[int | float]: 
         if len(self.states) < 2:
             raise ValueError("Animation must have at least two states")
         if self.looping and cursor > 1:
             cursor = (cursor % (1 + sys.float_info.epsilon))
-        if cursor < 0: return self.states[0][1]
-        if cursor > 1: return self.states[-1][1]
-        cursor = self.curve(cursor)
+        if cursor < 0: return list(self.states[0][1:])
+        if cursor > 1: return list(self.states[-1][1:])
         sindex = 0
-        for i, s in enumerate(self.states[1:]):
-            if (s[0] > cursor): break
+        for i, s in enumerate(self.states):
+            if (cursor < s[0]): break
             sindex = i
         lo_state = self.states[sindex]
-        if lo_state[0] > cursor or len(self.states) <= sindex + 1:
-            return lo_state[1]
+        if lo_state[0] > cursor or sindex + 1 >= len(self.states):
+            return list(lo_state[1:])
         hi_state = self.states[sindex + 1]
         try:
             cdelta = (cursor - lo_state[0]) / (hi_state[0] - lo_state[0])
-            return lo_state[1] + (hi_state[1] - lo_state[1]) * cdelta
+            cdelta = self.curve(cdelta)
+            vdelta = [lo_state[i] + (hi_state[i] - lo_state[i]) * cdelta
+                      for i in range(1, len(lo_state))]
+            return vdelta if self.interpolation else list(lo_state[1:])
         except ZeroDivisionError:
-            return hi_state[1]
+            return list(hi_state[1:])
 
 class GameObject(ABC):
     animators: dict[str, Tuple[str, ObjectAnimator]] = {}
@@ -102,6 +147,9 @@ class GameObject(ABC):
 
     def add_animation(self, name: str, anim: ObjectAnimator, mode: str):
         self.animators[name] = (mode, anim,)
+
+    def get_animation(self, name: str) -> ObjectAnimator:
+        return self.animators[name][1]
 
     def del_animation(self, name, *, reset: bool=False):
         setter = self.animators[name][1].setter
@@ -143,10 +191,14 @@ class PositionedObject(GameObject):
     def set_pos(self, x=0, y=0):
         self._pos = (x, y,)
         self.pos = (x + self._pos_mod[0], y  + self._pos_mod[1])
+    def set_posx(self, x=0): self.set_pos(x, self._pos[1])
+    def set_posy(self, y=0): self.set_pos(self._pos[0], y)
 
     def modify_pos(self, x=0, y=0):
         self._pos_mod = (x, y,)
         self.pos = (x + self._pos[0], y  + self._pos[1])
+    def modify_posx(self, x=0): self.modify_pos(x, self._pos_mod[1])
+    def modify_posy(self, y=0): self.modify_pos(self._pos_mod[0], y)
 
 class SizableObject(GameObject):
     _size = (0, 0)
@@ -156,10 +208,14 @@ class SizableObject(GameObject):
     def set_size(self, x=0, y=0):
         self._size = (x, y,)
         self.size = (x + self._size_mod[0], y  + self._size_mod[1])
+    def set_sizex(self, x=0): self.set_size(x, self._size[1])
+    def set_sizey(self, y=0): self.set_size(self._size[0], y)
 
     def modify_size(self, x=0, y=0):
         self._size_mod = (x, y,)
         self.size = (x + self._size[0], y  + self._size[1])
+    def modify_sizex(self, x=0): self.modify_size(x, self._size_mod[1])
+    def modify_sizey(self, y=0): self.modify_size(self._size_mod[0], y)
 
 class RectangularObject(PositionedObject, SizableObject):
     def collides(self, other=None):
