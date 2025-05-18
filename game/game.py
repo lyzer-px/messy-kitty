@@ -9,6 +9,7 @@ import pygame as pg
 
 from .constants import ASSETS, Colors
 from .system.screen import BaseLayer, Screen
+from .system.sprite import Sprite
 
 class MainMenuLayer(BaseLayer):
     def setup(self):
@@ -21,9 +22,7 @@ class MainMenuLayer(BaseLayer):
     def render(self):
         window = self.get_surface()
         window.fill(Colors.CYAN)
-        window.blit(ASSETS.get("grandma").get_resource(),
-            ((self.get_screen().width / 2) - 300,
-             (self.get_screen().height / 2) - 200))
+        Sprite(ASSETS, "grandma").render(window)
 
 class Game:
     def __init__(self):

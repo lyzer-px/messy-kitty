@@ -18,6 +18,9 @@ class BaseAsset:
     def get_path(self):
         return self.path
 
+    def set_resource(self, resource):
+        self.resource = resource
+
     def get_resource(self):
         if self.resource is None:
             raise AssetLoadingException("Asset is not loaded")
