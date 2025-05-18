@@ -12,9 +12,9 @@ from .system.screen import BaseLayer, Screen
 
 class MainMenuLayer(BaseLayer):
     def setup(self):
-        def exit_main_menu(*_):
+        def exit_main_menu(_):
             self.remove()
-        self.when(pg.BUTTON_LEFT, exit_main_menu)
+        self.when(pg.MOUSEBUTTONUP, exit_main_menu)
 
     def render(self):
         pass

@@ -20,7 +20,7 @@ class PossibleEvents(Enum):
 
 ASSETS = AssetManager({
     "grandma": Image('assets/grandma.png'),
-    "plate": Image('assets/plate.png'),
-    "table": Image('assets/table.png'),
-    "shelves": Image('assets/shelves')
+    #"plate": Image('assets/plate.png'),
+    #"table": Image('assets/table.png'),
+    #"shelves": Image('assets/shelves')
 })
