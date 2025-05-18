@@ -7,7 +7,8 @@
 
 import pygame as pg
 
-from .constants import Colors, Assets
+from .assets import Assets
+from .constants import Colors
 from .screen import Screen
 
 class Game:
@@ -18,15 +19,15 @@ class Game:
         self.screen_height: int = self.screen.height
         self.runs: bool = True
         self.clock = pg.time.Clock()
-        with open(Assets.grandma_path, 'r') as file:
-            self.grandma = pg.image.load(file);
         pg.init()
 
     def run(self):
         while self.runs:
             pg.display.update()
             self.screen.window.fill(Colors.cyan)
-            self.screen.window.blit(self.grandma, ((self.screen.width / 2) - 300, (self.screen.height / 2) - 200))
+            self.screen.window.blit(Assets.grandma.get_resource(),
+                ((self.screen.width / 2) - 300,
+                 (self.screen.height / 2) - 200))
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.runs = False

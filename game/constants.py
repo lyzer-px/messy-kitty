@@ -13,8 +13,5 @@ from enum import Enum
 class Colors:
     cyan = pg.Color(0, 255, 255)
 
-class Assets:
-    grandma_path = "assets/grandma.png"
-
 class PossibleEvents(Enum):
     ...
