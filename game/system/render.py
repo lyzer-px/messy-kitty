@@ -88,6 +88,9 @@ class ObjectAnimator():
     def reset_delta_anim(self, seconds: float = 0.0):
         self._time = seconds
 
+    def enable(self): self.enabled = True
+    def disable(self): self.enabled = False
+
     def animate_time(self, seconds: float):
         if not self.enabled: return
         if self.setter is not None:
