@@ -223,12 +223,12 @@ class SizableObject(GameObject):
 class RectangularObject(PositionedObject, SizableObject):
     def collides(self, other=None):
         if other is None:
-            return False
+            raise ValueError("Invalid value for other")
         elif isinstance(other, RectangularObject):
-            return self.size[0] + self.pos[0] > other.pos[0] \
-               and self.size[1] + self.pos[1] > other.pos[1] \
-               and self.pos[0] < other.pos[0] + other.pos[0] \
-               and self.pos[1] < other.pos[1] + other.pos[1]
+            return self.size[0] + self.pos[0] >= other.pos[0] \
+               and self.size[1] + self.pos[1] >= other.pos[1] \
+               and self.pos[0] <= other.pos[0] + other.pos[0] \
+               and self.pos[1] <= other.pos[1] + other.pos[1]
         elif type(other) is list:
             return any(self.collides(item) for item in other)
         return False
