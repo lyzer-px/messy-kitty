@@ -69,8 +69,8 @@ class ObjectAnimator():
             for i in range(start + 1, end):
                 cdelta = (self._states[i][0] - self._states[start][0]) \
                        / (self._states[end][0] - self._states[start][0])
-                vdelta = self._states[start][i] \
-                       + (self._states[end][i] - self._states[start][i]) * cdelta
+                vdelta = self._states[start][col] \
+                       + (self._states[end][col] - self._states[start][col]) * cdelta
                 self._states[i][col] = vdelta
         for iend in range(1, len(valid_rows)):
             start = valid_rows[iend - 1]
@@ -100,7 +100,7 @@ class ObjectAnimator():
 
     def animate_delta(self, delta_seconds: float):
         if not self.enabled: return
-        self._time += delta_seconds
+        self._time += abs(delta_seconds)
         if self.setter is not None:
             self.setter(*self.get_seconds_anim_values(self._time))
         else:
@@ -164,13 +164,13 @@ class GameObject(ABC):
         if self._last_time is None:
             self._last_time = time
         self.animate_time(time)
-        self.animate_delta(self._last_time - time)
+        self.animate_delta(self._last_time)
         self._last_time = time
 
-    def animate_time(self, delta_time: float, *, ignore_mode: bool=False):
+    def animate_time(self, time: float, *, ignore_mode: bool=False):
         for mode, anim in self.animators.values():
             if ignore_mode or mode == GameObject.MODE_TIME:
-                anim.animate_delta(delta_time)
+                anim.animate_time(time)
 
     def animate_delta(self, delta_time: float, *, ignore_mode: bool=False):
         for mode, anim in self.animators.values():
@@ -245,32 +245,47 @@ class Sprite(StatefulObject, RectangularObject, RenderableObject):
                  asset_name=None,
                  pos=(0, 0),
                  *,
-                 scale=1,
+                 scale=1.0,
+                 scale_to=(None, None),
                  states=None, tile_size=(16, 16)):
         self.images = []
+        self.image = None
         self.pos = pos
         self.asset_name = asset_name
         self.asset = assets.get(asset_name or "default")
         self.state = 0
         self.scale = scale
+        self.scale_to = scale_to
         sheet = self.asset.get_resource()
         if not isinstance(sheet, pg.Surface):
             raise TypeError("Wrong asset type for Sprite")
         if states is None:
             self.images = [sheet]
+            self.set_state(0)
             return
         for e in states:
-            self.images.append(sheet.subsurface(
+            self.images.append(
+                sheet.subsurface(
                 pg.rect.Rect(*([*e, *tile_size][:4]))
             ))
         self.set_state(0)
 
     def set_state(self, state: int):
+        state = int(state)
         self.state = max(min(state, len(self.images) - 1), 0)
-        self.image = self.images[self.state]
+        image = self.images[self.state]
+        rect = image.get_rect()
+        nsz = (rect.width * self.scale, rect.height * self.scale)
+        if self.scale_to[1] is not None:
+            nsz = (nsz[0] * (self.scale_to[1] / nsz[1]), self.scale_to[1])
+        elif self.scale_to[0] is not None:
+            nsz = (self.scale_to[0], nsz[1] * (self.scale_to[0] / nsz[0]))
+        self.set_size(int(nsz[0]), int(nsz[1]))
+        self.image = pg.transform.scale(image, nsz)
 
     def next_state(self):
         self.set_state(self.state + 1 % len(self.images))
 
     def render(self, surface: pg.Surface):
-        surface.blit(self.images[self.state], self.pos)
+        if self.image is not None:
+            surface.blit(self.image, self.pos)
