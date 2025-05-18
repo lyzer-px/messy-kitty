@@ -97,12 +97,12 @@ class ActionLayer(BaseLayer):
         self.max_plate_in_pile = 130
         self.plate_pile = [(40 + random.randint(0, 2), (1000 - (i * 10)),) for i in range(self.max_plate_in_pile)]
         self.plate_count = 20
+        self.drawer_plate_count = 1
+        self.drawer_plate_pile = [(100 + random.randint(0, 2), (355 - (i * 10)),) for i in range(self.max_plate_in_pile)]
         self.dragged_plate = False
         self.mouse_pos = (1920 / 2, 1080 / 2)
         self.plate_pos = (1920 / 2 + 100, 1080 / 2)
-        self.target.set_size(1, 1);
-        self.drawer.set_size(30, 30);
-        self.drawer.set_pos(0, 0);
+        self.drawer.set_pos(50, 150);
 
     def add_plate_to_pile(self):
         self.plate_count += 1
@@ -115,6 +115,8 @@ class ActionLayer(BaseLayer):
         self.mouse_button_pressed = pg.mouse.get_pressed()
         self.target.set_pos(*self.mouse_pos)
         self.cat.set_size(40, 40)
+        self.target.set_size(1, 1);
+        self.drawer.set_size(228, 265);
         if self.mouse_button_pressed[0]:
             self.plate_pos = self.mouse_pos
             self.plate.pos = self.plate_pile[self.plate_count - 1]
@@ -127,20 +129,22 @@ class ActionLayer(BaseLayer):
                 self.dragged_plate = False
         elif self.dragged_plate:
             if self.target.collides(self.drawer):
-                print("Put in drawer")
+                self.drawer_plate_count += 1
             else:
                 self.plate_count += 1
             self.dragged_plate = False
 
     def render(self):
         window = self.get_surface()
-        pg.draw.rect(window, (0, 255, 0), (self.plate_pile[0], (30, 30)))
         self.plate.pos = self.base_plate
         self.cat.render(window)
         self.table.render(window)
         self.tick()
         for i in range(self.plate_count):
             self.plate.pos = self.plate_pile[i]
+            self.plate.render(window)
+        for i in range(self.drawer_plate_count):
+            self.plate.pos = self.drawer_plate_pile[i]
             self.plate.render(window)
         if self.dragged_plate:
             self.plate.pos = self.plate_pos
