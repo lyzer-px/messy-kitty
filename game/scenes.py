@@ -27,20 +27,21 @@ class Cat(Sprite):
             ASSETS, "cat",
             states=Cat.TILES,
             tile_size=Cat.TILE_SIZE,
-            scale=2.0
+            scale=3.0
         )
         self.add_animation("switch_between_frames", ObjectAnimator(
             setter=lambda frame, x, y: (
                 self.set_state(frame),
-                self.set_pos(x, y)
+                self.modify_pos(x, y)
             ),
             states=[
                 (0, 0, 0, 0),
-                (1, len(Cat.TILES), 100, 100)
+                (1, len(Cat.TILES), -100, -100)
             ],
             looping=True,
-            duration=0.7
-        ), GameObject.MODE_TIME)
+            duration=0.7,
+            enabled=False
+        ), GameObject.MODE_DELTA)
 
 class ActionLayer(BaseLayer):
     cat = Cat()
@@ -49,26 +50,45 @@ class ActionLayer(BaseLayer):
 
     def setup(self):
         def mousemove(event):
-            ...
+            pos = pg.mouse.get_pos()
+            self.cat.set_pos(*pos)
         self.when(pg.MOUSEMOTION, mousemove)
 
     def tick(self):
-        ...
+        screen = self.get_screen()
+        time = float(screen.clock.get_time()) / 1000
+        self.cat.animate_auto(time)
 
     def render(self):
-        screen = self.get_screen()
         window = self.get_surface()
-        time = float(screen.clock.get_time()) / 1000
+        self.table.render(window)
         self.cat.render(window)
-        self.cat.animate_auto(time)
 
 class BackgroundLayer(BaseLayer):
     background = Sprite(ASSETS, "kitchen", scale_to=(None, 1080))
+    grandma = Sprite(ASSETS, "grandma", scale=1.5, pos=(-100, 450))
 
     def setup(self):
         self.get_screen().add_layer(ActionLayer)
+        self.grandma.add_animation("bouncy_ass_grandma", ObjectAnimator(
+            setter=lambda y: (self.grandma.set_posy(y)),
+            states=[
+                (0, 450),
+                (0.5, 490),
+                (1, 450),
+            ],
+            looping=True,
+            duration=50,
+            curve=ObjectAnimator.EASE
+        ), GameObject.MODE_DELTA)
+
+    def tick(self):
+        screen = self.get_screen()
+        time = float(screen.clock.get_time()) / 1000
+        self.grandma.animate_auto(time)
     
     def render(self):
         window = self.get_surface()
         window.fill(Colors.BLACK)
         self.background.render(window)
+        self.grandma.render(window)

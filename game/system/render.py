@@ -53,7 +53,6 @@ class ObjectAnimator():
             self._interpolate_columns(i)
         self.states: list[list[float]] = [
             [x for x in e if x is not None] for e in self._states]
-        print(self.states)
 
     def _interpolate_columns(self, col):
         valid_rows = [
@@ -101,7 +100,7 @@ class ObjectAnimator():
 
     def animate_delta(self, delta_seconds: float):
         if not self.enabled: return
-        self._time += delta_seconds
+        self._time += abs(delta_seconds)
         if self.setter is not None:
             self.setter(*self.get_seconds_anim_values(self._time))
         else:
@@ -165,13 +164,13 @@ class GameObject(ABC):
         if self._last_time is None:
             self._last_time = time
         self.animate_time(time)
-        self.animate_delta(self._last_time - time)
+        self.animate_delta(self._last_time)
         self._last_time = time
 
-    def animate_time(self, delta_time: float, *, ignore_mode: bool=False):
+    def animate_time(self, time: float, *, ignore_mode: bool=False):
         for mode, anim in self.animators.values():
             if ignore_mode or mode == GameObject.MODE_TIME:
-                anim.animate_delta(delta_time)
+                anim.animate_time(time)
 
     def animate_delta(self, delta_time: float, *, ignore_mode: bool=False):
         for mode, anim in self.animators.values():
@@ -272,7 +271,6 @@ class Sprite(StatefulObject, RectangularObject, RenderableObject):
         self.set_state(0)
 
     def set_state(self, state: int):
-        print(state)
         state = int(state)
         self.state = max(min(state, len(self.images) - 1), 0)
         image = self.images[self.state]
